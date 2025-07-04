@@ -6,12 +6,18 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('saveBtn').addEventListener('click', saveValues);
     
     // Open button event listener
-    document.getElementById('openBtn').addEventListener('click', openPrefilledForm);
+    document.getElementById('openBtn').addEventListener('click', handleOpenClick);
     
     // Add validation for time inputs
     setupTimeInputValidation('timeInHour', 'timeInMinute');
     setupTimeInputValidation('timeOutHour', 'timeOutMinute');
+    
+    // Add event listeners to all form inputs to track changes
+    setupFormChangeTracking();
 });
+
+// Variable to track if data has been saved
+let isDataSaved = true;
 
 function setupTimeInputValidation(hourId, minuteId) {
     const hourInput = document.getElementById(hourId);
@@ -73,6 +79,9 @@ function loadSavedValues() {
         document.getElementById('timeOutHour').value = result.timeOutHour || '5';
         document.getElementById('timeOutMinute').value = result.timeOutMinute || '00';
         document.getElementById('timeOutAmPm').value = result.timeOutAmPm || 'PM';
+        
+        // Mark data as saved since it was loaded from storage
+        markDataAsSaved();
     });
 }
 
@@ -98,6 +107,7 @@ function saveValues() {
     
     chrome.storage.sync.set(values, function() {
         showStatus('Values saved successfully!', 'success');
+        markDataAsSaved();
     });
 }
 
@@ -338,6 +348,66 @@ function showStatus(message, type) {
         statusDiv.textContent = '';
         statusDiv.className = '';
     }, 3000);
+}
+
+function setupFormChangeTracking() {
+    // Get all form inputs
+    const inputs = [
+        'name', 'email', 'project', 'srCode', 'course', 'accomplishment',
+        'timeInHour', 'timeInMinute', 'timeInAmPm', 'timeOutHour', 'timeOutMinute', 'timeOutAmPm'
+    ];
+    
+    // Add event listeners to track changes
+    inputs.forEach(inputId => {
+        const element = document.getElementById(inputId);
+        if (element) {
+            element.addEventListener('input', markDataAsUnsaved);
+            element.addEventListener('change', markDataAsUnsaved);
+        }
+    });
+}
+
+function markDataAsUnsaved() {
+    isDataSaved = false;
+    updateOpenButtonState();
+    updateUnsavedIndicator();
+}
+
+function markDataAsSaved() {
+    isDataSaved = true;
+    updateOpenButtonState();
+    updateUnsavedIndicator();
+}
+
+function updateOpenButtonState() {
+    const openBtn = document.getElementById('openBtn');
+    if (isDataSaved) {
+        openBtn.disabled = false;
+        openBtn.style.opacity = '1';
+        openBtn.style.cursor = 'pointer';
+        openBtn.title = 'Open pre-filled form';
+    } else {
+        openBtn.disabled = true;
+        openBtn.style.opacity = '0.5';
+        openBtn.style.cursor = 'not-allowed';
+        openBtn.title = 'Please save your data first';
+    }
+}
+
+function updateUnsavedIndicator() {
+    const indicator = document.getElementById('unsavedIndicator');
+    if (indicator) {
+        indicator.style.display = isDataSaved ? 'none' : 'inline';
+    }
+}
+
+function handleOpenClick(event) {
+    if (!isDataSaved) {
+        event.preventDefault();
+        showStatus('⚠️ Please save your data first before opening the form!', 'error');
+        return;
+    }
+    openPrefilledForm();
 }
 
 /*

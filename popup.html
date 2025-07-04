@@ -109,10 +109,17 @@
             background: linear-gradient(45deg, #FF6B6B, #FF5252);
             color: white;
         }
-        #openBtn:hover {
+        #openBtn:hover:not(:disabled) {
             background: linear-gradient(45deg, #FF5252, #FF6B6B);
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        #openBtn:disabled {
+            background: linear-gradient(45deg, #999, #777);
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
         #status {
             margin-top: 15px;
@@ -130,6 +137,16 @@
         .error {
             background: rgba(244, 67, 54, 0.3);
             color: #f44336;
+        }
+        #unsavedIndicator {
+            color: #ff6b6b;
+            font-size: 12px;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
         }
     </style>
 </head>
@@ -194,7 +211,7 @@
         </div>
         
         <div class="button-group">
-            <button id="saveBtn">💾 Save</button>
+            <button id="saveBtn">💾 Save <span id="unsavedIndicator" style="display: none;">●</span></button>
             <button id="openBtn">🔗 Open</button>
         </div>
         
