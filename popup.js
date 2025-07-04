@@ -65,10 +65,17 @@ function loadSavedValues() {
     ], function(result) {
         document.getElementById('name').value = result.name || '';
         document.getElementById('email').value = result.email || '';
-        document.getElementById('project').value = result.project || '';
         document.getElementById('srCode').value = result.srCode || '';
         document.getElementById('course').value = result.course || '';
         document.getElementById('accomplishment').value = result.accomplishment || '';
+        
+        // Project radio buttons
+        if (result.project) {
+            const projectRadio = document.querySelector(`input[name="project"][value="${result.project}"]`);
+            if (projectRadio) {
+                projectRadio.checked = true;
+            }
+        }
         
         // Time in fields
         document.getElementById('timeInHour').value = result.timeInHour || '8';
@@ -86,10 +93,13 @@ function loadSavedValues() {
 }
 
 function saveValues() {
+    // Get selected project radio button
+    const projectRadio = document.querySelector('input[name="project"]:checked');
+    
     const values = {
         name: document.getElementById('name').value,
         email: document.getElementById('email').value,
-        project: document.getElementById('project').value,
+        project: projectRadio ? projectRadio.value : '',
         srCode: document.getElementById('srCode').value,
         course: document.getElementById('course').value,
         accomplishment: document.getElementById('accomplishment').value,
@@ -138,11 +148,14 @@ function openPrefilledForm() {
     const year = today.getFullYear();
     const formattedDate = `${month}/${day}/${year}`;
     
+    // Get selected project radio button
+    const projectRadio = document.querySelector('input[name="project"]:checked');
+    
     // Get all form values
     const formData = {
         name: document.getElementById('name').value.trim(),
         email: document.getElementById('email').value.trim(),
-        project: document.getElementById('project').value.trim(),
+        project: projectRadio ? projectRadio.value : '',
         srCode: document.getElementById('srCode').value.trim(),
         course: document.getElementById('course').value.trim(),
         accomplishment: document.getElementById('accomplishment').value.trim(),
@@ -353,7 +366,7 @@ function showStatus(message, type) {
 function setupFormChangeTracking() {
     // Get all form inputs
     const inputs = [
-        'name', 'email', 'project', 'srCode', 'course', 'accomplishment',
+        'name', 'email', 'srCode', 'course', 'accomplishment',
         'timeInHour', 'timeInMinute', 'timeInAmPm', 'timeOutHour', 'timeOutMinute', 'timeOutAmPm'
     ];
     
@@ -364,6 +377,12 @@ function setupFormChangeTracking() {
             element.addEventListener('input', markDataAsUnsaved);
             element.addEventListener('change', markDataAsUnsaved);
         }
+    });
+    
+    // Add event listeners for radio buttons
+    const projectRadios = document.querySelectorAll('input[name="project"]');
+    projectRadios.forEach(radio => {
+        radio.addEventListener('change', markDataAsUnsaved);
     });
 }
 

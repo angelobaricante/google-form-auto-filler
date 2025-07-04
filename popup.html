@@ -148,6 +148,35 @@
             50% { opacity: 0.5; }
             100% { opacity: 1; }
         }
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .radio-label {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: normal;
+            margin-bottom: 0;
+        }
+        .radio-label:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: translateX(2px);
+        }
+        .radio-label input[type="radio"] {
+            margin-right: 8px;
+            width: auto;
+            accent-color: #667eea;
+        }
+        .radio-text {
+            color: #333;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -165,8 +194,21 @@
         </div>
         
         <div class="form-group">
-            <label for="project">Project Selection:</label>
-            <input type="text" id="project" placeholder="Enter project name">
+            <label>Project Selection:</label>
+            <div class="radio-group">
+                <label class="radio-label">
+                    <input type="radio" name="project" value="Haptics" id="project-haptics">
+                    <span class="radio-text">Haptics</span>
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="project" value="Mr.MED" id="project-mrmed">
+                    <span class="radio-text">Mr.MED</span>
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="project" value="TRIOE" id="project-trioe">
+                    <span class="radio-text">TRIOE</span>
+                </label>
+            </div>
         </div>
         
         <div class="form-group">
