@@ -2,11 +2,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load saved values when popup opens
     loadSavedValues();
     
-    // Save button event listener
-    document.getElementById('saveBtn').addEventListener('click', saveValues);
-    
-    // Open button event listener
-    document.getElementById('openBtn').addEventListener('click', handleOpenClick);
+    // Single action button event listener
+    document.getElementById('actionBtn').addEventListener('click', handleActionClick);
     
     // Add validation for time inputs
     setupTimeInputValidation('timeInHour', 'timeInMinute');
@@ -14,6 +11,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add event listeners to all form inputs to track changes
     setupFormChangeTracking();
+    
+    // Add event listeners for date option radio buttons
+    document.querySelectorAll('input[name="dateOption"]').forEach(radio => {
+        radio.addEventListener('change', toggleCustomDateField);
+    });
 });
 
 // Variable to track if data has been saved
@@ -58,10 +60,30 @@ function setupTimeInputValidation(hourId, minuteId) {
     });
 }
 
+function toggleCustomDateField() {
+    const customDateRadio = document.getElementById('date-custom');
+    const customDateInput = document.getElementById('customDate');
+    
+    if (customDateRadio.checked) {
+        customDateInput.style.display = 'block';
+        // Set today as default if no custom date is set
+        if (!customDateInput.value) {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            customDateInput.value = `${year}-${month}-${day}`;
+        }
+    } else {
+        customDateInput.style.display = 'none';
+    }
+}
+
 function loadSavedValues() {
     chrome.storage.sync.get([
         'name', 'email', 'project', 'srCode', 'course', 'accomplishment', 
-        'timeInHour', 'timeInMinute', 'timeInAmPm', 'timeOutHour', 'timeOutMinute', 'timeOutAmPm'
+        'timeInHour', 'timeInMinute', 'timeInAmPm', 'timeOutHour', 'timeOutMinute', 'timeOutAmPm',
+        'dateOption', 'customDate'
     ], function(result) {
         document.getElementById('name').value = result.name || '';
         document.getElementById('email').value = result.email || '';
@@ -87,14 +109,73 @@ function loadSavedValues() {
         document.getElementById('timeOutMinute').value = result.timeOutMinute || '00';
         document.getElementById('timeOutAmPm').value = result.timeOutAmPm || 'PM';
         
-        // Mark data as saved since it was loaded from storage
-        markDataAsSaved();
+        // Date fields
+        const dateOption = result.dateOption || 'today';
+        const dateRadio = document.querySelector(`input[name="dateOption"][value="${dateOption}"]`);
+        if (dateRadio) {
+            dateRadio.checked = true;
+        }
+        
+        if (result.customDate) {
+            document.getElementById('customDate').value = result.customDate;
+        }
+        
+        // Show/hide custom date field based on selection
+        toggleCustomDateField();
+        
+        // Check if user has meaningful saved data
+        const hasMeaningfulData = result.name || result.email || result.project || 
+                                 result.srCode || result.course || result.accomplishment ||
+                                 result.customDate;
+        
+        // Mark data as saved only if there's meaningful data
+        if (hasMeaningfulData) {
+            markDataAsSaved();
+        } else {
+            markDataAsUnsaved();
+        }
     });
 }
 
-function saveValues() {
+function resetForm() {
+    // Text fields
+    document.getElementById('name').value = '';
+    document.getElementById('email').value = '';
+    document.getElementById('srCode').value = '';
+    document.getElementById('course').value = '';
+    document.getElementById('accomplishment').value = '';
+
+    // Project radio buttons (reset all, set first as default if needed)
+    const projectRadios = document.querySelectorAll('input[name="project"]');
+    if (projectRadios.length > 0) {
+        projectRadios.forEach(radio => radio.checked = false);
+        projectRadios[0].checked = true;
+    }
+
+    // Time fields
+    document.getElementById('timeInHour').value = '8';
+    document.getElementById('timeInMinute').value = '00';
+    document.getElementById('timeInAmPm').value = 'AM';
+    document.getElementById('timeOutHour').value = '5';
+    document.getElementById('timeOutMinute').value = '00';
+    document.getElementById('timeOutAmPm').value = 'PM';
+
+    // Date fields
+    document.getElementById('date-today').checked = true;
+    document.getElementById('date-custom').checked = false;
+    document.getElementById('customDate').value = '';
+    toggleCustomDateField();
+
+    // Mark as unsaved since form is now empty
+    markDataAsUnsaved();
+}
+
+function saveValues(skipStatusMessage = false) {
     // Get selected project radio button
     const projectRadio = document.querySelector('input[name="project"]:checked');
+    
+    // Get selected date option radio button
+    const dateOptionRadio = document.querySelector('input[name="dateOption"]:checked');
     
     const values = {
         name: document.getElementById('name').value,
@@ -112,11 +193,17 @@ function saveValues() {
         // Time out values
         timeOutHour: document.getElementById('timeOutHour').value,
         timeOutMinute: document.getElementById('timeOutMinute').value,
-        timeOutAmPm: document.getElementById('timeOutAmPm').value
+        timeOutAmPm: document.getElementById('timeOutAmPm').value,
+        
+        // Date values
+        dateOption: dateOptionRadio ? dateOptionRadio.value : 'today',
+        customDate: document.getElementById('customDate').value
     };
     
     chrome.storage.sync.set(values, function() {
-        showStatus('Values saved successfully!', 'success');
+        if (!skipStatusMessage) {
+            showStatus('Values saved successfully!', 'success');
+        }
         markDataAsSaved();
     });
 }
@@ -141,12 +228,33 @@ function openPrefilledForm() {
     const timeOutAmPm = document.getElementById('timeOutAmPm').value || 'PM';
     const timeOut = `${timeOutHour}:${timeOutMinute} ${timeOutAmPm}`;
     
-    // Get today's date in MM/DD/YYYY format (for Google Forms)
-    const today = new Date();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    const year = today.getFullYear();
-    const formattedDate = `${month}/${day}/${year}`;
+    // Get date based on user selection
+    let formattedDate;
+    const dateOptionRadio = document.querySelector('input[name="dateOption"]:checked');
+    const dateOption = dateOptionRadio ? dateOptionRadio.value : 'today';
+    
+    if (dateOption === 'custom') {
+        const customDateValue = document.getElementById('customDate').value;
+        if (customDateValue) {
+            // Convert YYYY-MM-DD to MM/DD/YYYY format for Google Forms
+            const dateParts = customDateValue.split('-');
+            formattedDate = `${dateParts[1]}/${dateParts[2]}/${dateParts[0]}`;
+        } else {
+            // Fallback to today if custom date is not set
+            const today = new Date();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const year = today.getFullYear();
+            formattedDate = `${month}/${day}/${year}`;
+        }
+    } else {
+        // Use today's date
+        const today = new Date();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const year = today.getFullYear();
+        formattedDate = `${month}/${day}/${year}`;
+    }
     
     // Get selected project radio button
     const projectRadio = document.querySelector('input[name="project"]:checked');
@@ -367,7 +475,8 @@ function setupFormChangeTracking() {
     // Get all form inputs
     const inputs = [
         'name', 'email', 'srCode', 'course', 'accomplishment',
-        'timeInHour', 'timeInMinute', 'timeInAmPm', 'timeOutHour', 'timeOutMinute', 'timeOutAmPm'
+        'timeInHour', 'timeInMinute', 'timeInAmPm', 'timeOutHour', 'timeOutMinute', 'timeOutAmPm',
+        'customDate'
     ];
     
     // Add event listeners to track changes
@@ -384,49 +493,63 @@ function setupFormChangeTracking() {
     projectRadios.forEach(radio => {
         radio.addEventListener('change', markDataAsUnsaved);
     });
+    
+    // Add event listeners for date option radio buttons
+    const dateOptionRadios = document.querySelectorAll('input[name="dateOption"]');
+    dateOptionRadios.forEach(radio => {
+        radio.addEventListener('change', markDataAsUnsaved);
+    });
 }
 
 function markDataAsUnsaved() {
     isDataSaved = false;
-    updateOpenButtonState();
+    updateActionButtonState();
     updateUnsavedIndicator();
 }
 
 function markDataAsSaved() {
     isDataSaved = true;
-    updateOpenButtonState();
+    updateActionButtonState();
     updateUnsavedIndicator();
 }
 
-function updateOpenButtonState() {
-    const openBtn = document.getElementById('openBtn');
+function updateActionButtonState() {
+    const actionBtn = document.getElementById('actionBtn');
     if (isDataSaved) {
-        openBtn.disabled = false;
-        openBtn.style.opacity = '1';
-        openBtn.style.cursor = 'pointer';
-        openBtn.title = 'Open pre-filled form';
+        actionBtn.disabled = false;
+        actionBtn.style.opacity = '1';
+        actionBtn.style.cursor = 'pointer';
+        actionBtn.innerHTML = '🔗 Open <span id="unsavedIndicator" style="display: none;">●</span>';
+        actionBtn.title = 'Open pre-filled form';
+        actionBtn.classList.remove('unsaved');
     } else {
-        openBtn.disabled = true;
-        openBtn.style.opacity = '0.5';
-        openBtn.style.cursor = 'not-allowed';
-        openBtn.title = 'Please save your data first';
+        actionBtn.disabled = false;
+        actionBtn.style.opacity = '1';
+        actionBtn.style.cursor = 'pointer';
+        actionBtn.innerHTML = '💾 Save & Open <span id="unsavedIndicator" style="display: inline;">●</span>';
+        actionBtn.title = 'Save data and open pre-filled form';
+        actionBtn.classList.add('unsaved');
     }
 }
 
 function updateUnsavedIndicator() {
-    const indicator = document.getElementById('unsavedIndicator');
-    if (indicator) {
-        indicator.style.display = isDataSaved ? 'none' : 'inline';
-    }
+    // The indicator is now handled within updateOpenButtonState function
+    // This function is kept for compatibility but does nothing
 }
 
-function handleOpenClick(event) {
+function handleActionClick(event) {
     if (!isDataSaved) {
-        event.preventDefault();
-        showStatus('⚠️ Please save your data first before opening the form!', 'error');
-        return;
+        // Save the data first, then open the form
+        showStatus('Saving data and opening form...', 'success');
+        saveValues(true); // Skip the save status message since we're showing our own
+        // Add a small delay to ensure saving is complete before opening
+        setTimeout(() => {
+            openPrefilledForm();
+        }, 100);
+    } else {
+        // Data is already saved, just open the form
+        openPrefilledForm();
     }
-    openPrefilledForm();
 }
 
 /*
