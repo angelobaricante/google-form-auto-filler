@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            width: 350px;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 22px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        input[type="text"], input[type="email"], input[type="time"], select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.9);
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+        input[type="text"]:focus, input[type="email"]:focus, input[type="time"]:focus, select:focus, textarea:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .time-input-container {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .time-input {
+            width: 50px;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.9);
+            text-align: center;
+        }
+        .time-select {
+            width: 70px;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+        .time-separator {
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        #saveBtn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+        }
+        #saveBtn:hover {
+            background: linear-gradient(45deg, #45a049, #4CAF50);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        #openBtn {
+            background: linear-gradient(45deg, #FF6B6B, #FF5252);
+            color: white;
+        }
+        #openBtn:hover {
+            background: linear-gradient(45deg, #FF5252, #FF6B6B);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        #status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            min-height: 20px;
+            transition: all 0.3s ease;
+        }
+        .success {
+            background: rgba(76, 175, 80, 0.3);
+            color: #4CAF50;
+        }
+        .error {
+            background: rgba(244, 67, 54, 0.3);
+            color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📝 Form Auto Filler</h1>
+        
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <input type="text" id="name" placeholder="Enter your name">
+        </div>
+        
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" placeholder="Enter your email">
+        </div>
+        
+        <div class="form-group">
+            <label for="project">Project Selection:</label>
+            <input type="text" id="project" placeholder="Enter project name">
+        </div>
+        
+        <div class="form-group">
+            <label for="srCode">SR Code:</label>
+            <input type="text" id="srCode" placeholder="Enter SR code">
+        </div>
+        
+        <div class="form-group">
+            <label for="course">Course:</label>
+            <input type="text" id="course" placeholder="Enter course name">
+        </div>
+        
+        <div class="form-group">
+            <label for="accomplishment">Accomplishment Report:</label>
+            <textarea id="accomplishment" placeholder="Enter your accomplishment report..."></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label>Time In:</label>
+            <div class="time-input-container">
+                <input type="number" id="timeInHour" min="1" max="12" value="8" class="time-input">
+                <span class="time-separator">:</span>
+                <input type="number" id="timeInMinute" min="0" max="59" value="00" step="1" class="time-input">
+                <select id="timeInAmPm" class="time-select">
+                    <option value="AM" selected>AM</option>
+                    <option value="PM">PM</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>Time Out:</label>
+            <div class="time-input-container">
+                <input type="number" id="timeOutHour" min="1" max="12" value="5" class="time-input">
+                <span class="time-separator">:</span>
+                <input type="number" id="timeOutMinute" min="0" max="59" value="00" step="1" class="time-input">
+                <select id="timeOutAmPm" class="time-select">
+                    <option value="AM">AM</option>
+                    <option value="PM" selected>PM</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="button-group">
+            <button id="saveBtn">💾 Save</button>
+            <button id="openBtn">🔗 Open</button>
+        </div>
+        
+        <div id="status"></div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

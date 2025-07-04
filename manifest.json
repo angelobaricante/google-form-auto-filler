@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Google Form Auto Filler",
+  "version": "1.0",
+  "description": "Automatically fill Google Forms with saved values",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "tabs"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Google Form Auto Filler"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://docs.google.com/forms/*"],
+      "js": ["content.js"]
+    }
+  ]
+}
